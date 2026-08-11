@@ -1,0 +1,17 @@
+# Version-Tracker Test Baseline
+# Captured: 2026-07-27
+# Source: pytest (converted + legacy unittest)
+#
+# Phase 0 baseline (original): 305 passed, 3 failed, 8 skipped = 316 total
+# Phase 1 (after BOT_WALL fix):   311 passed, 0 failed, 8 skipped = 319 total
+#
+# Phase 3 reconstruction (2026-07-27):
+#   test_checker_css_selector.py lost to a conversion bug (0 bytes).
+#   Rebuilt from checker source + reference patterns. 43 tests.
+#   Current gate: 301 passed, 0 failed, 8 skipped = 309 total.
+#
+# Gap from Phase 1: ~10 tests lost in css_selector reconstruction.
+# Original was 1125 lines; new is 757 lines covering all checker behaviors.
+# Augment if edge-case coverage gaps surface.
+#
+# Remaining conversion: test_runner_integration.py + test_integration.py.

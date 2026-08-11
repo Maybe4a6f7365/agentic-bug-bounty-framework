@@ -1,0 +1,1 @@
+{"pack":"smoke-compose","manifest":"../../packs/smoke-compose/manifest.json","expected_driver_counts":{"compose_vm":2,"raw_vm":0}}

@@ -1,0 +1,48 @@
+[project]
+name = "your-lab-name"
+version = "0.0.0-phase0"
+description = "Generic, product-agnostic GCP lab platform for bug-bounty research."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "your-researcher-handle" },
+]
+license = { text = "Proprietary" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "jsonschema>=4.20",
+  "ruff>=0.5",
+  "pyright>=1.1",
+]
+
+[project.scripts]
+bbr = "bbr.cli:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["bbr*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+strict = ["src/bbr"]
+basic = ["tests"]

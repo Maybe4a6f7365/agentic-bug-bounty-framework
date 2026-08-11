@@ -1,0 +1,51 @@
+# EXAMPLE — copy and edit
+contract:
+  source_of_truth: OPEN_CONTRACT.yaml
+  target: example-target
+  h1_program: example-program
+  h1_target_url: https://hackerone.com/example-program
+  last_reviewed: 2026-01-01
+  last_reviewed_by: example-researcher
+
+program_scope:
+  in_scope:
+    - example authorized asset
+  out_of_scope:
+    - example excluded asset
+
+severity_grading:
+  default_reviewer: example-reviewer
+  cvss_ranges:
+    critical: 9.0 - 10.0
+    high: 7.0 - 8.9
+    medium: 4.0 - 6.9
+    low: 0.1 - 3.9
+    none: 0.0
+  static_evidence_required_for_high: true
+  dynamic_poc_required_for_critical: true
+  evidence_minimums:
+    high: [screenshot OR repro, writeup, related_findings]
+    medium: [writeup, evidence]
+    low: [writeup]
+    none: [writeup-or-filed-note]
+  target_specific_notes:
+    - Replace with program-specific grading guidance.
+
+handoff_policy:
+  who_may_submit_to_h1: [example-researcher]
+  who_may_prepare_handoff: [example-researcher]
+  pre_flight_required_for_handoff:
+    - grading_complete: true
+    - policy_re_reviewed: true
+    - duplicate_preflight_completed: true
+  handoff_ledger_under: runs/handoffs/
+  handoff_ledger_pattern: '<finding-id>_to_H1.yaml'
+
+outcomes_view:
+  regenerated_under: generated/OUTCOMES.md
+  regenerate_command: tools/regenerate_target_outcomes.sh example-target
+  regeneration_pulls_from:
+    - findings-manifest.json
+    - contract.yaml
+    - runs/handoffs/*.yaml
+    - runs/standing_knowns.yaml

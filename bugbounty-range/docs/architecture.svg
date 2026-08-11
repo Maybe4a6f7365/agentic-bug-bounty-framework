@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-labelledby="title desc">
+  <title id="title">BugBountyRange architecture</title>
+  <desc id="desc">Generic control plane, shared access plane, isolated lab networks, drivers, packs, state, scenarios, and evidence.</desc>
+  <style>
+    rect { fill: #f7f9fc; stroke: #26374a; stroke-width: 2; }
+    text { font-family: sans-serif; fill: #172536; font-size: 15px; }
+    .title { font-size: 20px; font-weight: bold; }
+    .line { stroke: #375a7f; stroke-width: 2; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#375a7f"/>
+    </marker>
+  </defs>
+  <text class="title" x="28" y="32">BugBountyRange — generic isolated lab platform</text>
+  <rect x="30" y="60" width="250" height="90" rx="8"/>
+  <text x="50" y="88">bbr control plane</text>
+  <text x="50" y="114">lifecycle • locking • allocator</text>
+  <text x="50" y="138">scenario • evidence • secrets</text>
+  <rect x="355" y="60" width="250" height="90" rx="8"/>
+  <text x="375" y="88">Terraform</text>
+  <text x="375" y="114">immutable shared Foundation</text>
+  <text x="375" y="138">per-lab modules</text>
+  <rect x="680" y="60" width="250" height="90" rx="8"/>
+  <text x="700" y="88">Shared access plane</text>
+  <text x="700" y="114">WireGuard bastion • IAP</text>
+  <text x="700" y="138">operator-only ingress</text>
+  <line class="line" x1="280" y1="105" x2="350" y2="105"/>
+  <line class="line" x1="605" y1="105" x2="675" y2="105"/>
+  <rect x="90" y="230" width="300" height="145" rx="8"/>
+  <text x="110" y="258">Isolated lab A</text>
+  <text x="110" y="284">dedicated subnet + service account</text>
+  <text x="110" y="310">default-deny firewall</text>
+  <text x="110" y="336">compose_vm / raw_vm nodes</text>
+  <text x="110" y="362">pack-defined topology</text>
+  <rect x="570" y="230" width="300" height="145" rx="8"/>
+  <text x="590" y="258">Isolated lab B (hard cap ≤ 2)</text>
+  <text x="590" y="284">dedicated subnet + service account</text>
+  <text x="590" y="310">default-deny firewall</text>
+  <text x="590" y="336">scenario execution</text>
+  <text x="590" y="362">redacted evidence + diffs</text>
+  <line class="line" x1="480" y1="150" x2="245" y2="225"/>
+  <line class="line" x1="480" y1="150" x2="715" y2="225"/>
+</svg>

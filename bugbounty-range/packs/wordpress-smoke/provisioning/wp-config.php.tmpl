@@ -1,0 +1,49 @@
+<?php
+/**
+ * wp-config.php template — rendered ON the VM at bootstrap time.
+ *
+ * NO secrets live in this template. The rendered file contains:
+ *   - DB_NAME, DB_USER, DB_PASSWORD (runtime-generated; not in
+ *     this template)
+ *   - TABLE_PREFIX (static, not a secret)
+ *   - WP-Salts (added at runtime via wp config shuffle-salts)
+ *
+ * This template is tracked in git. The RENDERED file is written
+ * to /var/www/html/wp-config.php on the VM with mode 0640.
+ *
+ * @see ADR-0010 D.8
+ */
+
+// ** Database settings ** //
+define( 'DB_NAME',     '__DB_NAME__' );
+define( 'DB_USER',     '__DB_USER__' );
+define( 'DB_PASSWORD', '__DB_PASSWORD__' );
+define( 'DB_HOST',     '127.0.0.1' );
+define( 'DB_CHARSET',  'utf8mb4' );
+define( 'DB_COLLATE',  '' );
+
+/**#@+
+ * Authentication unique keys and salts.
+ * Generated at runtime by `wp config shuffle-salts`.
+ * See ADR-0010 D.8.
+ */
+# Salts are inserted by wp-cli at runtime
+/**#@-*/
+
+$table_prefix = '__TABLE_PREFIX__';
+
+define( 'WP_DEBUG',          false );
+define( 'WP_DEBUG_DISPLAY',  false );
+define( 'WP_DEBUG_LOG',      true  );
+define( 'SCRIPT_DEBUG',      false );
+
+define( 'DISALLOW_FILE_EDIT', true );
+define( 'AUTOMATIC_UPDATER_DISABLED', true );
+define( 'WP_AUTO_UPDATE_CORE', false );
+
+/* That's all, stop editing! */
+if ( ! defined( 'ABSPATH' ) ) {
+  define( 'ABSPATH', __DIR__ . '/' );
+}
+
+require_once ABSPATH . 'wp-settings.php';

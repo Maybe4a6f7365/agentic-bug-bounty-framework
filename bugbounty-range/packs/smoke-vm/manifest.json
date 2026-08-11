@@ -1,0 +1,89 @@
+{
+  "pack_id": "smoke-vm",
+  "version": "0.1.0",
+  "description": "Generic single-lab lifecycle vertical slice. One raw-vm Debian 12 node with OS Login, IAP SSH, WireGuard admin access, default-deny egress, and a local readiness marker. No external IPs, no Cloud NAT, no products. Proves the per-lab Terraform root, GCS state prefix, lifecycle state machine, and CLI commands.",
+  "topology": {
+    "nodes": [
+      {
+        "node_id": "smoke-vm-001",
+        "role": "reference",
+        "driver": "raw_vm",
+        "machine_type": "e2-micro",
+        "disk_type": "pd-standard",
+        "disk_size_gb": 10,
+        "base_image": {
+          "self_link": "projects/debian-cloud/global/images/debian-12-bookworm-v20260721"
+        },
+        "exposed_private_services": [],
+        "readiness_checks": [
+          {
+            "type": "command",
+            "command": "test -f /var/lib/bbr/ready"
+          }
+        ],
+        "lifecycle_hooks": {
+          "pre_create": "scripts/pre-create.sh",
+          "post_create": "scripts/post-create.sh",
+          "pre_destroy": "scripts/pre-destroy.sh",
+          "post_destroy": "scripts/post-destroy.sh"
+        },
+        "driver_payload": {
+          "service_account_id": "bbr-lab-smoke-vm-001",
+          "internal_ip": "10.200.1.10",
+          "ttl_max_lifetime_seconds": 28800,
+          "ttl_idle_timeout_seconds": 1800
+        }
+      }
+    ],
+    "node_to_node_flows": [],
+    "runtime_egress_policy": {
+      "default": "deny",
+      "allowlist": []
+    },
+    "bootstrap_egress_policy": {
+      "enabled": false,
+      "purpose": "no external dependencies during bootstrap",
+      "remove_after_bootstrap": true
+    }
+  },
+  "comparison_groups": [
+    {
+      "group_id": "smoke-baseline",
+      "role": "reference",
+      "node_refs": ["smoke-vm-001"]
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "smoke-vm-readiness",
+      "description": "Wait for /var/lib/bbr/ready on smoke-vm-001 via IAP-tunneled SSH.",
+      "steps": [
+        {
+          "kind": "readiness",
+          "node_ref": "smoke-vm-001"
+        }
+      ]
+    }
+  ],
+  "evidence_sources": [
+    {
+      "node_ref": "smoke-vm-001",
+      "path": "/var/lib/bbr/ready",
+      "kind": "file"
+    }
+  ],
+  "ttl": {
+    "max_lifetime": "8h",
+    "idle_timeout": "30m"
+  },
+  "cost_limits": {
+    "per_lab_eur_estimate": 0.45,
+    "per_cycle_eur_limit": 1.00
+  },
+  "teardown_requirements": [
+    {
+      "check": "smoke-vm-001 readiness marker readable or VM STOPPED",
+      "on_failure": "force"
+    }
+  ]
+}

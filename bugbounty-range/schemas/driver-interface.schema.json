@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hermes.bbr/schemas/driver-interface.schema.json",
+  "title": "BugBountyRange Driver Interface",
+  "description": "Contract every execution driver must satisfy. Driver implementations live in drivers/<driver-name>/ and are loaded by name only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["driver_id", "version", "capabilities", "inputs"],
+  "properties": {
+    "driver_id": {
+      "type": "string",
+      "enum": ["compose_vm", "raw_vm"],
+      "description": "Must match the directory name under drivers/."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "compose",
+          "systemd",
+          "package_install",
+          "filesystem_hash",
+          "container_state",
+          "process_state",
+          "database_dump",
+          "pre_snapshot_hook",
+          "post_snapshot_hook",
+          "pre_destroy_hook",
+          "post_destroy_hook"
+        ]
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_spec", "node_payload"],
+      "properties": {
+        "node_spec": { "$ref": "lab-pack.schema.json#/definitions/node" },
+        "node_payload": {
+          "type": "object",
+          "description": "Driver-specific payload as declared in the lab pack."
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "private_ip": { "type": "string", "format": "ipv4" },
+        "ready": { "type": "boolean" },
+        "evidence_paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "lifecycle_methods": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "validate",
+          "plan",
+          "create",
+          "bootstrap",
+          "isolate",
+          "verify",
+          "snapshot",
+          "restore",
+          "stop",
+          "start",
+          "destroy"
+        ]
+      },
+      "minItems": 11
+    }
+  }
+}

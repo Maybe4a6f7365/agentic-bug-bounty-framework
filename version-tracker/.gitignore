@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.db
+*.db-journal
+*.db-wal
+**/secrets/**
+*.env
+
+# Runtime state written by checkers/escalation.py save_state() — not source.
+.escalation_state.json

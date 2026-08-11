@@ -1,0 +1,1 @@
+{"pack":"wordpress-wp2shell","manifest":"../../packs/wordpress-wp2shell/manifest.json","expected_driver_counts":{"compose_vm":2,"raw_vm":0}}

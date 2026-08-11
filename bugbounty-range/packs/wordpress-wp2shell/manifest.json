@@ -1,0 +1,54 @@
+{
+  "pack_id": "wordpress-wp2shell",
+  "version": "0.1.0",
+  "description": "Declarative migration of the vulnerable and patched Compose topology from labs/wordpress-cve-2026.",
+  "topology": {
+    "nodes": [
+      {
+        "node_id": "wordpress-vulnerable",
+        "role": "vulnerable",
+        "driver": "compose_vm",
+        "machine_type": "e2-small",
+        "disk_type": "pd-standard",
+        "disk_size_gb": 20,
+        "base_image": {"self_link": "projects/debian-cloud/global/images/debian-12-bookworm-v20260721"},
+        "exposed_private_services": [{"name": "http", "port": 80, "protocol": "tcp"}],
+        "readiness_checks": [{"type": "http", "port": 80, "path": "/"}],
+        "driver_payload": {"composelist_ref": "../../../labs/wordpress-cve-2026/compose/vulnerable/docker-compose.yml"}
+      },
+      {
+        "node_id": "wordpress-patched",
+        "role": "patched",
+        "driver": "compose_vm",
+        "machine_type": "e2-small",
+        "disk_type": "pd-standard",
+        "disk_size_gb": 20,
+        "base_image": {"self_link": "projects/debian-cloud/global/images/debian-12-bookworm-v20260721"},
+        "exposed_private_services": [{"name": "http", "port": 80, "protocol": "tcp"}],
+        "readiness_checks": [{"type": "http", "port": 80, "path": "/"}],
+        "driver_payload": {"composelist_ref": "../../../labs/wordpress-cve-2026/compose/patched/docker-compose.yml"}
+      }
+    ],
+    "node_to_node_flows": [],
+    "runtime_egress_policy": {"default": "deny", "allowlist": []},
+    "bootstrap_egress_policy": {
+      "enabled": false,
+      "purpose": "all inputs are pack-controlled",
+      "remove_after_bootstrap": true
+    }
+  },
+  "comparison_groups": [
+    {"group_id": "vulnerable", "role": "vulnerable", "node_refs": ["wordpress-vulnerable"]},
+    {"group_id": "patched", "role": "patched", "node_refs": ["wordpress-patched"]}
+  ],
+  "scenarios": [],
+  "evidence_sources": [
+    {"node_ref": "wordpress-vulnerable", "path": "/var/log", "kind": "log"},
+    {"node_ref": "wordpress-patched", "path": "/var/log", "kind": "log"}
+  ],
+  "ttl": {"max_lifetime": "8h", "idle_timeout": "30m"},
+  "cost_limits": {"per_lab_eur_estimate": 0.80, "per_cycle_eur_limit": 1.00},
+  "teardown_requirements": [
+    {"check": "both nodes stopped or reachable", "on_failure": "force"}
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hermes.bbr/schemas/evidence-format.schema.json",
+  "title": "BugBountyRange Evidence Format",
+  "description": "Machine-readable evidence captured per scenario step. The differential engine consumes documents of this shape and emits diffs in the same shape.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_id",
+    "lab_id",
+    "scenario_id",
+    "node_ref",
+    "captured_at",
+    "captures"
+  ],
+  "properties": {
+    "evidence_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,63}$"
+    },
+    "lab_id": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "node_ref": { "type": "string" },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "captures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind"],
+        "properties": {
+          "kind": {
+            "enum": [
+              "http",
+              "tcp",
+              "shell",
+              "log",
+              "file",
+              "database_dump",
+              "process_state",
+              "container_state"
+            ]
+          },
+          "http": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["status", "headers", "body_hash", "body_size", "timing_ms"],
+            "properties": {
+              "status": { "type": "integer" },
+              "headers": {
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              },
+              "body_hash": { "type": "string" },
+              "body_size": { "type": "integer" },
+              "body_redacted": { "type": "string" },
+              "timing_ms": { "type": "number" }
+            }
+          },
+          "tcp": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["data_hash", "data_size", "timing_ms"],
+            "properties": {
+              "data_hash": { "type": "string" },
+              "data_size": { "type": "integer" },
+              "timing_ms": { "type": "number" }
+            }
+          },
+          "shell": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["exit_code", "stdout_hash", "stderr_hash"],
+            "properties": {
+              "exit_code": { "type": "integer" },
+              "stdout_hash": { "type": "string" },
+              "stderr_hash": { "type": "string" },
+              "stdout_redacted": { "type": "string" },
+              "stderr_redacted": { "type": "string" }
+            }
+          },
+          "log": {
+            "type": "object",
+            "required": ["path", "hash", "size"],
+            "properties": {
+              "path": { "type": "string" },
+              "hash": { "type": "string" },
+              "size": { "type": "integer" },
+              "redacted_excerpt": { "type": "string" }
+            }
+          },
+          "file": {
+            "type": "object",
+            "required": ["path", "hash"],
+            "properties": {
+              "path": { "type": "string" },
+              "hash": { "type": "string" }
+            }
+          },
+          "database_dump": {
+            "type": "object",
+            "required": ["engine", "hash"],
+            "properties": {
+              "engine": { "type": "string" },
+              "hash": { "type": "string" }
+            }
+          },
+          "process_state": {
+            "type": "object",
+            "required": ["pids"],
+            "properties": {
+              "pids": { "type": "array", "items": { "type": "integer" } },
+              "hash": { "type": "string" }
+            }
+          },
+          "container_state": {
+            "type": "object",
+            "required": ["container_ids"],
+            "properties": {
+              "container_ids": { "type": "array", "items": { "type": "string" } },
+              "hash": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "redaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy_version": { "type": "string" },
+        "rules_applied": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+# Convenience snapshot copied from:
+# knowledge-sources/engineering-sources/templates/case-bundle.yaml
+# Canonical source remains the engineering-sources copy. If the two differ, use canonical.
+# Copied for case-bundle-builder on 2026-07-22; no schema fields changed.
+# Provenance rule: cite the canonical source path in generated bundle ledgers.
+# Synchronization rule: compare this snapshot byte-for-byte before using it.
+# Review rule: do not treat the snapshot date as a schema version.
+# License rule: inherit no license assumption; inspect the canonical source ledger.
+# Integrity rule: hash the canonical template used for each generated bundle.
+# Mutation rule: fill a workspace copy, never either repository template in place.
+# Removal rule: retain every canonical key; use `null` with a reason when unknown.
+
+# Case-Bundle Template — one vulnerability, fully instrumented for skill construction.
+# Fill every field or mark `null` with a reason. The five most important fields are flagged ★.
+# See ../CASE-BUNDLE-SCHEMA.md for field semantics and a worked example.
+
+case_id: CASE-000000                     # stable, zero-padded
+
+classification:
+  cwe_leaf:                              # e.g. CWE-639 (IDOR)
+  cwe_class:                             # e.g. CWE-862 (missing authorization)
+  mapping_confidence:                    # auto | reviewed | disputed
+  alternative_mappings: []               # other plausible CWEs
+
+environment:
+  product:
+  framework:
+  language:                              # js/ts | python | java/kotlin | php | ruby | go | c# | c/c++
+  component:
+  vulnerable_version:                    # from OSV/GHSA `introduced`
+  fixed_version:                         # from OSV/GHSA `fixed`
+
+researcher_evidence:                     # the attacker narrative (H1-style)
+  original_report:                       # url / id
+  reproduction:                          # steps or PoC ref
+  demonstrated_impact:
+  required_privileges:
+  attack_preconditions:
+
+engineering_evidence:                    # the ground truth H1 usually lacks
+  vulnerable_repository:
+  vulnerable_commit:
+  fix_commit:
+  patch_diff:                            # ★ the actual diff / motif
+  changed_tests:                         # ★ regression test added with the fix
+  maintainer_discussion:                 # ★ questions, severity debate, false starts
+  root_cause_summary:
+
+behavioral_model:                        # the transferable invariant
+  attacker_controlled_input:
+  trust_boundary:
+  missing_or_incorrect_control:
+  sensitive_operation:
+  exploit_oracle:                        # what proves it (positive)
+  negative_control:                      # ★ patched/safe variant that must NOT trigger
+  neighboring_safe_behavior:             # sibling endpoint that enforces the control
+
+agent_guidance:                          # how the skill operationalizes this case
+  applicability_signals:                 # recon signals that this class may apply
+  hypotheses:
+  low_impact_probes:                     # safe, in-scope probes
+  evidence_requirements:                 # what to collect before asserting
+  false_positive_conditions:            # ★ when NOT to report
+  stop_conditions:                       # when to self-kill the lead
+  prohibited_actions:                    # out-of-scope / unsafe test methods
+
+triage:                                  # three independent labels
+  technically_vulnerable:                # true | false
+  in_scope:                              # true | false
+  reportable:                            # true | false (meets program impact threshold)
+  severity:
+  reviewer_reasoning:
+
+provenance:
+  sources: []                            # primary source URLs
+  source_versions: []                    # dataset/version tags (e.g. MoreFixes v4)
+  licenses: []                           # per-source license
+  retrieved_at:                          # ISO date
+  content_hashes: []                     # hash of ingested artifacts
+  human_reviewer:                        # who verified the bundle

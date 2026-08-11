@@ -1,0 +1,15 @@
+# Terraform state, secrets, and ephemeral artefacts — never committed.
+*.tfstate
+*.tfstate.*
+.terraform/
+# Exception: pin the provider lock file.
+!.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+*.key
+*.conf
+*.env
+secrets/
+evidence/*
+!evidence/.gitkeep

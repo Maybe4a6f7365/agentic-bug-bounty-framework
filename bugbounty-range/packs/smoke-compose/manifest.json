@@ -1,0 +1,154 @@
+{
+  "pack_id": "smoke-compose",
+  "version": "0.1.0",
+  "description": "Smoke test for the compose_vm driver. Two-service Compose topology with deterministic fixture. No WordPress code.",
+  "topology": {
+    "nodes": [
+      {
+        "node_id": "redis-1",
+        "role": "shared",
+        "driver": "compose_vm",
+        "machine_type": "e2-small",
+        "disk_type": "pd-standard",
+        "disk_size_gb": 20,
+        "base_image": {
+          "family": "debian-12"
+        },
+        "exposed_private_services": [
+          {
+            "name": "redis",
+            "port": 6379,
+            "protocol": "tcp"
+          }
+        ],
+        "readiness_checks": [
+          {
+            "type": "tcp",
+            "port": 6379
+          }
+        ],
+        "snapshot_hooks": {
+          "pre": "scripts/snapshot-pre.sh",
+          "post": "scripts/snapshot-post.sh"
+        },
+        "lifecycle_hooks": {
+          "pre_create": "scripts/lifecycle-pre-create.sh",
+          "post_create": "scripts/lifecycle-post-create.sh",
+          "pre_destroy": "scripts/lifecycle-pre-destroy.sh",
+          "post_destroy": "scripts/lifecycle-post-destroy.sh"
+        },
+        "driver_payload": {
+          "composelist_ref": "compose/redis-1.compose.yml"
+        }
+      },
+      {
+        "node_id": "counter-1",
+        "role": "reference",
+        "driver": "compose_vm",
+        "machine_type": "e2-small",
+        "disk_type": "pd-standard",
+        "disk_size_gb": 20,
+        "base_image": {
+          "family": "debian-12"
+        },
+        "dependencies": [
+          {
+            "node_ref": "redis-1",
+            "wait_for": "tcp:6379"
+          }
+        ],
+        "exposed_private_services": [
+          {
+            "name": "counter",
+            "port": 8080,
+            "protocol": "tcp"
+          }
+        ],
+        "readiness_checks": [
+          {
+            "type": "http",
+            "port": 8080,
+            "path": "/value"
+          }
+        ],
+        "driver_payload": {
+          "composelist_ref": "compose/counter-1.compose.yml"
+        }
+      }
+    ],
+    "node_to_node_flows": [
+      {
+        "from": "counter-1",
+        "to": "redis-1",
+        "protocol": "tcp",
+        "ports": [6379]
+      }
+    ],
+    "runtime_egress_policy": {
+      "default": "deny",
+      "allowlist": []
+    },
+    "bootstrap_egress_policy": {
+      "enabled": true,
+      "purpose": "image pull from allowlisted registries",
+      "remove_after_bootstrap": true
+    }
+  },
+  "comparison_groups": [
+    {
+      "group_id": "single",
+      "role": "reference",
+      "node_refs": ["counter-1"]
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "baseline-value",
+      "description": "Fetch /value on counter-1 and assert the baseline fixture is returned.",
+      "timeout": "30s",
+      "follow_redirects": false,
+      "retry": {
+        "enabled": false
+      },
+      "steps": [
+        {
+          "kind": "readiness",
+          "node_ref": "counter-1"
+        },
+        {
+          "kind": "http",
+          "destination_ref": "counter-1:counter",
+          "method": "GET",
+          "path": "/value",
+          "expected_status": 200,
+          "capture_response": true
+        }
+      ]
+    }
+  ],
+  "evidence_sources": [
+    {
+      "node_ref": "counter-1",
+      "path": "/var/log/counter/app.log",
+      "kind": "log"
+    }
+  ],
+  "ttl": {
+    "max_lifetime": "8h",
+    "idle_timeout": "30m"
+  },
+  "cost_limits": {
+    "per_lab_eur_estimate": 0.40,
+    "per_cycle_eur_limit": 5.00
+  },
+  "teardown_requirements": [
+    {
+      "check": "redis-1 tcp 6379 reachable",
+      "on_failure": "force"
+    },
+    {
+      "check": "counter-1 http 8080 reachable",
+      "on_failure": "force"
+    }
+  ]
+}

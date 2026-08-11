@@ -1,0 +1,91 @@
+#!/bin/bash
+# BugBountyRange bastion first-boot bootstrap.
+#
+# Invoked by the Compute Engine instance agent. This script:
+#   - apt-installs wireguard and the helper utilities
+#   - generates the server private key LOCALLY on the VM
+#     (mode 0600, owner root:root), never in Terraform or state
+#   - receives the operator public key as a Terraform
+#     template variable, embedded directly into wg0.conf
+#   - writes /etc/wireguard/wg0.conf with the public endpoint and peer
+#   - enables IP forwarding and the WireGuard kernel module
+#   - starts the wg-quick service
+#
+# This script does NOT print, log, or transmit any private key.
+# Specifically: no `set -x`, no `tee` of the private key, no
+# `cat`/`echo` of the private key, and the key file itself is
+# never passed to cat, echo, tee, or any logging construct.
+# Bash xtrace is explicitly disabled with `set +x` and the
+# PS4 variable is unset before any private-key operation.
+#
+# The server public key is read out only over an authenticated
+# IAP / OS-Login SSH session, never via Serial Console or
+# startup-script logs.
+#
+# Note: every $${...} below is escaped Terraform template syntax
+# so that templatefile() does not try to interpolate it; the
+# rendered script on the bastion sees a single $ in Bash.
+
+set -euo pipefail
+set +x
+unset PS4
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update -qq
+apt-get install -y -qq wireguard wireguard-tools
+
+install -d -o root -g root -m 0700 /etc/wireguard
+
+# Server private key — generated locally on the VM, never leaves it.
+# Idempotent: a re-run with an existing key does not regenerate.
+if [[ ! -s /etc/wireguard/wg0.key ]]; then
+  umask 077
+  tmp_key="$(mktemp /etc/wireguard/.wg0.key.XXXXXX)"
+  trap 'rm -f "$tmp_key"' EXIT
+
+  wg genkey >"$tmp_key"
+  chmod 0600 "$tmp_key"
+  chown root:root "$tmp_key"
+  mv "$tmp_key" /etc/wireguard/wg0.key
+
+  wg pubkey \
+    </etc/wireguard/wg0.key \
+    >/etc/wireguard/wg0.pub
+
+  chmod 0644 /etc/wireguard/wg0.pub
+  chown root:root /etc/wireguard/wg0.pub
+  trap - EXIT
+fi
+
+# Private-key material enters wg0.conf via a single shell
+# variable that is unset immediately after the here-document
+# is written. The variable is never echoed, never redirected
+# to a logging channel, and never passed to cat.
+PRIV_KEY="$(< /etc/wireguard/wg0.key)"
+
+cat > /etc/wireguard/wg0.conf <<EOF
+[Interface]
+Address = ${wireguard_server_address}
+ListenPort = ${bastion_listen_port}
+PrivateKey = $${PRIV_KEY}
+SaveConfig = false
+
+PostUp = sysctl -w net.ipv4.ip_forward=1
+PostUp = iptables -t nat -A POSTROUTING -s ${wireguard_overlay_cidr} -o ens4 -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -s ${wireguard_overlay_cidr} -o ens4 -j MASQUERADE
+
+[Peer]
+PublicKey = ${operator_public_key}
+AllowedIPs = ${wireguard_operator_address}
+EOF
+
+chmod 0600 /etc/wireguard/wg0.conf
+chown root:root /etc/wireguard/wg0.conf
+
+unset PRIV_KEY
+
+systemctl enable wg-quick@wg0
+systemctl start wg-quick@wg0
+
+systemctl restart ssh || true

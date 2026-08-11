@@ -1,0 +1,70 @@
+{
+  "schema_version": 5,
+  "manifest_kind": "findings",
+  "target_identity": {
+    "target_name": "Example Target",
+    "target_owner": "Example Organization",
+    "h1_program_handle": "example-program",
+    "version_tested": "replace-me",
+    "method": "replace with static, dynamic, or combined method"
+  },
+  "findings": [
+    {
+      "finding_id": "EXAMPLE-F01",
+      "title": "Example qualified vulnerability",
+      "vuln_class": "example_vulnerability_class",
+      "severity": "Medium",
+      "static_confidence": "Static-consistent",
+      "record_kind": "vulnerability",
+      "qualification": {
+        "state": "qualified",
+        "strongest_proven_claim": "Replace with the strongest evidence-backed claim.",
+        "affected_principal": "example-user",
+        "primary_control": "example authorization control",
+        "authoritative_result": "Replace with the observed authoritative outcome.",
+        "negative_controls": [
+          "Replace with a control that did not produce the claimed result."
+        ],
+        "dynamic_reproductions": 1
+      },
+      "research_state": "report_ready",
+      "attacker_model": {
+        "preconditions": [
+          "replace-me"
+        ],
+        "vector": [
+          "replace-me"
+        ],
+        "victim_action_required": false,
+        "victim_action_description": "No victim action required."
+      },
+      "writeup_paths": [
+        "findings/EXAMPLE-F01.md"
+      ]
+    },
+    {
+      "finding_id": "EXAMPLE-F02",
+      "title": "Example closed observation",
+      "vuln_class": "example_observation_class",
+      "severity": "None",
+      "static_confidence": "Static-consistent",
+      "record_kind": "observation",
+      "qualification": {
+        "state": "closed",
+        "strongest_proven_claim": "The suspected control held under the tested conditions.",
+        "affected_principal": "none demonstrated",
+        "primary_control": "example security control",
+        "authoritative_result": "The negative control and candidate path produced no unauthorized effect.",
+        "negative_controls": [
+          "Authorized baseline behaved as expected."
+        ],
+        "dynamic_reproductions": 0
+      },
+      "research_state": "closed",
+      "closure_reason": "control_held",
+      "writeup_paths": [
+        "findings/EXAMPLE-F02.md"
+      ]
+    }
+  ]
+}

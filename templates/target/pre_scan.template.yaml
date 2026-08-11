@@ -1,0 +1,14 @@
+# EXAMPLE — copy and edit
+target: example-target
+last_updated: 2026-01-01
+last_updated_by: example-researcher
+
+program_url: https://hackerone.com/example-program
+policy_last_reviewed: 2026-01-01
+asset_fingerprint: "sha256:replace-with-current-digest"
+
+known_findings_count: 2
+last_run: 2026-01-01
+
+open_chains_unresolved: []
+policy_changes_since_review: null

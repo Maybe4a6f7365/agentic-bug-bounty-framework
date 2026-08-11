@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# Generic raw-VM startup. Empty artifact_uri preserves the Phase-3 local marker
+# path; a configured URI performs the authenticated Phase-4 bootstrap.
+
+set -euo pipefail
+
+TEMPLATE_LAB_ID="${lab_id}"
+TEMPLATE_PACK_ID="${pack_id}"
+TEMPLATE_NODE_ID="${node_id}"
+TEMPLATE_INTERNAL_IP="${internal_ip}"
+ARTIFACT_URI="${artifact_uri}"
+ARTIFACT_SHA256="${artifact_sha256}"
+MINISIGN_PUBLIC_KEY="${minisign_public_key}"
+SUPPORTED_PLATFORM="${supported_platform}"
+BOOTSTRAP_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+CURRENT_STAGE="preflight"
+
+write_failure_marker() {
+  local exit_code="$1"
+  mkdir -p /var/lib/bbr
+  jq -n \
+    --arg stage "$CURRENT_STAGE" \
+    --argjson exit_code "$exit_code" \
+    --arg utc_time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg artifact_uri "$ARTIFACT_URI" \
+    '{stage:$stage,exit_code:$exit_code,utc_time:$utc_time,artifact_uri:$artifact_uri}' \
+    > /var/lib/bbr/failure
+  chmod 0644 /var/lib/bbr/failure
+}
+trap 'rc=$?; if [[ $rc -ne 0 ]]; then write_failure_marker "$rc"; fi' EXIT
+
+mkdir -p /var/lib/bbr /var/log/bbr
+
+if [[ -z "$ARTIFACT_URI" ]]; then
+  cat > /var/lib/bbr/ready <<EOF
+LAB_ID=$TEMPLATE_LAB_ID
+PACK_ID=$TEMPLATE_PACK_ID
+NODE_ID=$TEMPLATE_NODE_ID
+BOOTSTRAP_AT=$BOOTSTRAP_AT
+EXPECTED_INTERNAL_IP=$TEMPLATE_INTERNAL_IP
+EOF
+  chmod 0644 /var/lib/bbr/ready
+  exit 0
+fi
+
+exec >>/var/log/bbr/bootstrap.log 2>&1
+for required_tool in curl sha256sum minisign jq tar unzstd; do
+  command -v "$required_tool" >/dev/null || {
+    printf '%s missing required tool: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$required_tool"
+    exit 30
+  }
+done
+
+if [[ -z "$MINISIGN_PUBLIC_KEY" ]]; then
+  CURRENT_STAGE="minisign"
+  printf '%s missing Minisign public key\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 31
+fi
+
+metadata_url="http://169.254.169.254/computeMetadata/v1"
+work_dir="$(mktemp -d)"
+cleanup() {
+  local exit_code="$?"
+  rm -rf "$work_dir"
+  if [[ "$exit_code" -ne 0 ]]; then
+    write_failure_marker "$exit_code"
+  fi
+  exit "$exit_code"
+}
+trap cleanup EXIT
+
+token=""
+for attempt in 1 2 3 4 5 6; do
+  token_response="$(curl -fsS --connect-timeout 2 \
+    -H 'Metadata-Flavor: Google' \
+    "$metadata_url/instance/service-accounts/default/token" || true)"
+  token="$(printf '%s' "$token_response" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')"
+  [[ -n "$token" ]] && break
+  sleep "$attempt"
+done
+[[ -n "$token" ]] || exit 30
+
+gcs_download() {
+  local object_uri="$1"
+  local destination="$2"
+  local without_scheme="$${object_uri#gs://}"
+  local bucket="$${without_scheme%%/*}"
+  local object="$${without_scheme#*/}"
+  local encoded="$${object//\//%2F}"
+  local url="https://storage.googleapis.com/download/storage/v1/b/$bucket/o/$encoded?alt=media"
+  local vip
+  for vip in 199.36.153.4 199.36.153.5 199.36.153.6 199.36.153.7; do
+    if curl -fsS --connect-timeout 5 --max-time 120 --retry 1 \
+      --resolve "storage.googleapis.com:443:$vip" \
+      -H "Authorization: Bearer $token" -o "$destination" "$url"; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+release_uri="$${ARTIFACT_URI%/artifact.tar.zst}"
+CURRENT_STAGE="download"
+gcs_download "$ARTIFACT_URI" "$work_dir/artifact.tar.zst" || exit 30
+gcs_download "$ARTIFACT_URI.minisig" "$work_dir/artifact.tar.zst.minisig" || exit 31
+gcs_download "$release_uri/manifest.json" "$work_dir/manifest.json" || exit 33
+
+CURRENT_STAGE="minisign"
+minisign -V \
+  -P "$MINISIGN_PUBLIC_KEY" \
+  -m "$work_dir/artifact.tar.zst" \
+  -x "$work_dir/artifact.tar.zst.minisig" || exit 31
+echo "Minisign verification successful"
+CURRENT_STAGE="sha256"
+actual_sha="$(sha256sum "$work_dir/artifact.tar.zst" | awk '{print $1}')"
+[[ "$actual_sha" == "$ARTIFACT_SHA256" ]] || exit 32
+echo "SHA-256 verification successful"
+CURRENT_STAGE="manifest"
+jq -e '(.manifest_version >= 1) and
+  (.artifact_sha256 | type == "string" and length == 64) and
+  (.supported_platform | type == "string")' "$work_dir/manifest.json" >/dev/null || exit 33
+[[ "$(jq -r .artifact_sha256 "$work_dir/manifest.json")" == "$actual_sha" ]] || exit 34
+[[ "$(jq -r .supported_platform "$work_dir/manifest.json")" == "$SUPPORTED_PLATFORM" ]] || exit 34
+
+CURRENT_STAGE="extract"
+mkdir -p /opt/bbr
+install -m 0600 "$work_dir/artifact.tar.zst" /opt/bbr/artifact.tar.zst
+tar --use-compress-program=unzstd -xf "$work_dir/artifact.tar.zst" -C /opt/bbr || exit 35
+CURRENT_STAGE="install-configure-start-healthcheck"
+ARTIFACT_URI="$ARTIFACT_URI" \
+ARTIFACT_SHA256="$ARTIFACT_SHA256" \
+SUPPORTED_PLATFORM="$SUPPORTED_PLATFORM" \
+  /opt/bbr/provisioning/bootstrap.sh || exit $?
+
+cat > /var/lib/bbr/ready <<EOF
+LAB_ID=$TEMPLATE_LAB_ID
+PACK_ID=$TEMPLATE_PACK_ID
+NODE_ID=$TEMPLATE_NODE_ID
+BOOTSTRAP_AT=$BOOTSTRAP_AT
+EXPECTED_INTERNAL_IP=$TEMPLATE_INTERNAL_IP
+ARTIFACT_SHA256=$ARTIFACT_SHA256
+EOF
+chmod 0644 /var/lib/bbr/ready

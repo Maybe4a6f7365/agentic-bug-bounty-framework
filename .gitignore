@@ -1,0 +1,42 @@
+# Tooling / cache
+.terraform/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.tmp
+*.swp
+*.bak
+
+# Secrets / Credentials
+.env
+.env.*
+*.tfvars
+!*.tfvars.example
+*.pem
+*.key
+*.crt
+*.kubeconfig
+service-account*.json
+gha-creds-*.json
+
+# Build / runtime artifacts
+/dist/
+/build/
+node_modules/
+.tox/
+.coverage
+coverage.xml
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local target data (concrete programs, hooks, sessions)
+# This is a public-cleansing repo. Concrete target data lives outside it.
+runs/
+outputs/
+artifacts/
+evidence/
+captures/

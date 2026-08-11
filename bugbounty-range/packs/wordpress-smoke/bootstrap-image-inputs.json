@@ -1,0 +1,66 @@
+{
+  "format": 1,
+  "source_image_self_link": "projects/debian-cloud/global/images/debian-12-bookworm-v20260721",
+  "boot_disk": {
+    "type": "pd-standard",
+    "size_gb": 20
+  },
+  "minisign": {
+    "archive": "minisign-0.12-linux.tar.gz",
+    "sha256": "9a599b48ba6eb7b1e80f12f36b94ceca7c00b7a5173c95c3efc88d9822957e73",
+    "version": "0.12"
+  },
+  "packages": [
+    {
+      "file": "ca-certificates_20230311+deb12u1_all.deb",
+      "package": "ca-certificates",
+      "version": "20230311+deb12u1",
+      "sha256": "0d5f444f594e48c1e16a41d8fc628a09b24c658916a1274025c2330f2a802bed"
+    },
+    {
+      "file": "curl_7.88.1-10+deb12u15_amd64.deb",
+      "package": "curl",
+      "version": "7.88.1-10+deb12u15",
+      "sha256": "0dd9b6bf7a0bd11af2d68a52ec44c2a223fa7c11f9104c36ce1047e1137d4a8f"
+    },
+    {
+      "file": "jq_1.6-2.1+deb12u1_amd64.deb",
+      "package": "jq",
+      "version": "1.6-2.1+deb12u1",
+      "sha256": "ac95774deddeb233a91eeda124cac91a953966dbd761bb98ba10d332c19af626"
+    },
+    {
+      "file": "libcurl4_7.88.1-10+deb12u15_amd64.deb",
+      "package": "libcurl4",
+      "version": "7.88.1-10+deb12u15",
+      "sha256": "3042904de01f9c4fbdcf1452b8f81abedcf2b015f9b9deba109063322b5bd68b"
+    },
+    {
+      "file": "libjq1_1.6-2.1+deb12u1_amd64.deb",
+      "package": "libjq1",
+      "version": "1.6-2.1+deb12u1",
+      "sha256": "d4f10dadf1ec12e9285cf9bcc5c432286a10124378ead503e48e0c49a03027ba"
+    },
+    {
+      "file": "libonig5_6.9.8-1_amd64.deb",
+      "package": "libonig5",
+      "version": "6.9.8-1",
+      "sha256": "59ecfce6d88c7c4b09496ce182b3b8303e8e8477664e009b16ae83a09cd12be7"
+    },
+    {
+      "file": "zstd_1.5.4+dfsg2-5_amd64.deb",
+      "package": "zstd",
+      "version": "1.5.4+dfsg2-5",
+      "sha256": "3f6f833ae2fd533a0c9238310aef1148f51a64aa5d5f1278451ddc793d4d6d15"
+    }
+  ],
+  "expected_tools": {
+    "bash": "5.2",
+    "curl": "7.88.1",
+    "sha256sum": "9.1",
+    "jq": "1.6",
+    "tar": "1.34",
+    "unzstd": "1.5.4",
+    "minisign": "0.12"
+  }
+}

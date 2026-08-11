@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hermes.bbr/schemas/lifecycle-state.schema.json",
+  "title": "BugBountyRange Lifecycle State",
+  "description": "Per-lab runtime state. The state machine defined in DIRECTIVE.md Section 9 governs every transition recorded here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["lab_id", "pack_id", "state", "created_at", "updated_at"],
+  "properties": {
+    "lab_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,63}$"
+    },
+    "pack_id": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "DEFINED",
+        "VALIDATED",
+        "PLANNED",
+        "CREATED",
+        "BOOTSTRAPPING",
+        "VERIFYING_ARTIFACT",
+        "INSTALLING",
+        "CONFIGURING",
+        "STARTING",
+        "ISOLATED",
+        "READY",
+        "HEALTHY",
+        "VERIFIED",
+        "FAILURE",
+        "ROLLBACK",
+        "DESTROY_PLANNED",
+        "TESTING",
+        "STOPPED",
+        "DESTROYED"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["node_id", "state"],
+        "properties": {
+          "node_id": { "type": "string" },
+          "state": {
+            "enum": [
+              "DEFINED",
+              "VALIDATED",
+              "PLANNED",
+              "CREATED",
+              "BOOTSTRAPPING",
+              "VERIFYING_ARTIFACT",
+              "INSTALLING",
+              "CONFIGURING",
+              "STARTING",
+              "ISOLATED",
+              "READY",
+              "HEALTHY",
+              "VERIFIED",
+              "FAILURE",
+              "ROLLBACK",
+              "DESTROY_PLANNED",
+              "TESTING",
+              "STOPPED",
+              "DESTROYED"
+            ]
+          },
+          "private_ip": { "type": "string", "format": "ipv4" },
+          "driver_id": { "type": "string" }
+        }
+      }
+    },
+    "active_scenario": {
+      "type": ["string", "null"]
+    },
+    "snapshots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "created_at"],
+        "properties": {
+          "name": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "snapshot_ids": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      }
+    },
+    "cost_estimate_eur": { "type": "number" },
+    "ttl_deadline": { "type": "string", "format": "date-time" }
+  }
+}

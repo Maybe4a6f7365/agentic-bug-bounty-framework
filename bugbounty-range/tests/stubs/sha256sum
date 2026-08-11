@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+file=$1
+name="${file##*/}"
+if [[ "$name" == "minisign-0.12-linux.tar.gz" ]]; then
+  hash="9a599b48ba6eb7b1e80f12f36b94ceca7c00b7a5173c95c3efc88d9822957e73"
+else
+  hash="$(jq -er --arg name "$name" \
+    '.packages[] | select(.file == $name) | .sha256' "$BBR_TEST_SPEC")"
+fi
+printf '%s  %s\n' "$hash" "$file"

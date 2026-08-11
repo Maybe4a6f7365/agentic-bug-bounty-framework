@@ -1,0 +1,338 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hermes.bbr/schemas/lab-pack.schema.json",
+  "title": "BugBountyRange Lab Pack",
+  "description": "Declarative manifest for a single BBR lab pack. Validated by the control plane before any resource is created. Adding a new product must NOT require changes to this schema; instead, add fields the schema already permits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pack_id",
+    "version",
+    "topology",
+    "comparison_groups",
+    "scenarios",
+    "ttl",
+    "cost_limits",
+    "teardown_requirements"
+  ],
+  "properties": {
+    "pack_id": {
+      "description": "Lowercase, hyphen-separated identifier. Unique across the platform.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,63}$"
+    },
+    "version": {
+      "description": "Semver of the pack manifest itself, not of any underlying product.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "topology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes"],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/definitions/node"
+          }
+        },
+        "node_to_node_flows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to", "protocol", "ports"],
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "protocol": { "enum": ["tcp", "udp", "icmp"] },
+              "ports": {
+                "type": "array",
+                "items": { "type": "integer", "minimum": 1, "maximum": 65535 }
+              }
+            }
+          }
+        },
+        "runtime_egress_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["default"],
+          "properties": {
+            "default": { "enum": ["deny", "allow"] },
+            "allowlist": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["host", "ports"],
+                "properties": {
+                  "host": { "type": "string" },
+                  "ports": {
+                    "type": "array",
+                    "items": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "bootstrap_egress_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "purpose": { "type": "string" },
+            "remove_after_bootstrap": { "type": "boolean", "default": true },
+            "target_ranges": {
+              "type": "array",
+              "items": { "type": "string", "format": "ipv4" }
+            },
+            "protocol_port": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "protocol": { "const": "tcp" },
+                "port": { "const": 443 }
+              }
+            },
+            "allowed_destination_ranges": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "allowed_protocol_ports": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "firewall_priority": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "comparison_groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["group_id", "node_refs"],
+        "properties": {
+          "group_id": { "type": "string" },
+          "role": { "enum": ["vulnerable", "patched", "reference"] },
+          "node_refs": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "$ref": "scenario.schema.json"
+      }
+    },
+    "evidence_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["node_ref", "path"],
+        "properties": {
+          "node_ref": { "type": "string" },
+          "path": { "type": "string" },
+          "kind": { "enum": ["log", "file", "database_dump", "command_output"] }
+        }
+      }
+    },
+    "ttl": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_lifetime"],
+      "properties": {
+        "max_lifetime": { "type": "string", "pattern": "^[0-9]+(s|m|h)$" },
+        "idle_timeout": { "type": "string", "pattern": "^[0-9]+(s|m|h)$" }
+      }
+    },
+    "cost_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["per_lab_eur_estimate", "per_cycle_eur_limit"],
+      "properties": {
+        "per_lab_eur_estimate": { "type": "number", "minimum": 0 },
+        "per_cycle_eur_limit": { "type": "number", "minimum": 0 }
+      }
+    },
+    "teardown_requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["check"],
+        "properties": {
+          "check": { "type": "string" },
+          "on_failure": { "enum": ["abort", "force"] }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "driver"],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{2,63}$"
+        },
+        "role": {
+          "enum": ["vulnerable", "patched", "reference", "shared"]
+        },
+        "driver": {
+          "enum": ["compose_vm", "raw_vm"]
+        },
+        "machine_type": { "type": "string" },
+        "disk_type": { "enum": ["pd-standard", "pd-balanced", "pd-ssd"] },
+        "disk_size_gb": { "type": "integer", "minimum": 10, "maximum": 2000 },
+        "base_image": {
+          "description": "Boot image for the lab node. Phase 3 smoke packs MUST use a fixed self_link. family/digest remain supported for compatibility but are not used by the Phase 3 vertical slice.",
+          "oneOf": [
+            {
+              "type": "object",
+              "required": ["self_link"],
+              "properties": {
+                "self_link": {
+                  "type": "string",
+                  "pattern": "^projects/[^/]+/global/images/[^/]+$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "required": ["family"],
+              "properties": {
+                "family": { "type": "string" },
+                "project": { "type": "string" }
+              }
+            },
+            {
+              "type": "object",
+              "required": ["digest"],
+              "properties": {
+                "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+              }
+            }
+          ]
+        },
+        "exposed_private_services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["port"],
+            "properties": {
+              "name": { "type": "string" },
+              "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+              "protocol": { "enum": ["tcp", "udp"] }
+            }
+          }
+        },
+        "readiness_checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+              "type": { "enum": ["tcp", "http", "command"] },
+              "port": { "type": "integer" },
+              "path": { "type": "string" },
+              "command": { "type": "string" }
+            }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["node_ref"],
+            "properties": {
+              "node_ref": { "type": "string" },
+              "wait_for": { "type": "string" }
+            }
+          }
+        },
+        "snapshot_hooks": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pre": { "type": "string" },
+            "post": { "type": "string" }
+          }
+        },
+        "restoration_hooks": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pre": { "type": "string" },
+            "post": { "type": "string" }
+          }
+        },
+        "lifecycle_hooks": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pre_create": { "type": "string" },
+            "post_create": { "type": "string" },
+            "pre_destroy": { "type": "string" },
+            "post_destroy": { "type": "string" }
+          }
+        },
+        "driver_payload": {
+          "description": "Driver-specific payload. compose_vm expects a Compose list; raw_vm expects a provisioning manifest. The platform does not interpret the content beyond passing it to the driver.",
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "artifact_uri": {
+              "type": "string",
+              "pattern": "^gs://[^/]+/.+$"
+            },
+            "artifact_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "artifact_signature": { "type": "string", "minLength": 1 },
+            "minisign_public_key": { "type": "string", "minLength": 1 },
+            "minisign_trust_store": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["key_id", "public_key", "valid_since"],
+                "properties": {
+                  "key_id": { "type": "string", "minLength": 1 },
+                  "public_key": { "type": "string", "minLength": 1 },
+                  "valid_since": { "type": "string", "format": "date-time" }
+                }
+              }
+            },
+            "bootstrap_artifact_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "supported_platform": {
+              "type": "string",
+              "pattern": "^projects/[^/]+/global/images/[^/]+$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

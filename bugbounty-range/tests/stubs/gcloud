@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf '%s\n' "$*" >> "${BBR_TEST_STATE_DIR}/gcloud.log"
+
+increment_counter() {
+  local name=$1
+  local counter_file="${BBR_TEST_STATE_DIR}/${name}"
+  local count=0
+
+  if [[ -f "$counter_file" ]]; then
+    read -r count < "$counter_file"
+  fi
+  count=$((count + 1))
+  printf '%s\n' "$count" > "$counter_file"
+  printf '%s\n' "$count"
+}
+
+if [[ "$*" == compute\ ssh\ *"--command=true"* ]]; then
+  count="$(increment_counter readiness_count)"
+  if [[ "$BBR_TEST_READINESS_FAILURES" == "-1" ||
+    "$count" -le "$BBR_TEST_READINESS_FAILURES" ]]; then
+    if [[ "$count" -le 2 ]]; then
+      echo "ERROR: IAP error 4047" >&2
+    else
+      echo "ERROR: IAP error 4003" >&2
+    fi
+    exit 1
+  fi
+  exit 0
+fi
+
+if [[ "$*" == compute\ scp\ * ]]; then
+  count="$(increment_counter scp_count)"
+  if [[ "$BBR_TEST_SCP_FAILURES" == "-1" ||
+    "$count" -le "$BBR_TEST_SCP_FAILURES" ]]; then
+    echo "ERROR: transient SCP failure" >&2
+    exit 1
+  fi
+  exit 0
+fi
+
+if [[ "$*" == compute\ images\ describe\ * ]]; then
+  cat <<'JSON'
+{"name":"bbr-debian-12-bootstrap-tools-20260727-v2","selfLink":"https://www.googleapis.com/compute/v1/projects/your-lab-name-your-researcher-handle/global/images/bbr-debian-12-bootstrap-tools-20260727-v2","status":"READY","guestOsFeatures":[{"type":"UEFI_COMPATIBLE"}]}
+JSON
+fi
+exit 0

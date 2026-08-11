@@ -1,0 +1,26 @@
+# APK provenance — SHA-256 of target APKs on the AVD rig
+#
+# Replace every placeholder `<sha256>` with the SHA-256 of YOUR APK copy at
+# extraction time. The lab verifies integrity with `sha256sum <apk-path>`.
+#
+# Splits live in /opt/research/apks/<package>/ ; single bases in /opt/research/apks/.
+# APKs are gitignored (never committed); only these hashes are tracked.
+# Splits contain NO user data — developer-signed app code/resources, identical for all installs.
+# Verify: sha256sum /opt/research/apks/<package>/<file>
+
+## <App-1> (com.example.app1) — <FINDING-ID> validated
+<sha256-of-your-base-apk>  com.example.app1/base.apk
+<sha256-of-your-arm64-split>  com.example.app1/split_config.arm64_v8a.apk
+<sha256-of-your-density-split>  com.example.app1/split_config.xxhdpi.apk
+<sha256-of-your-locale-split>  com.example.app1/split_config.<locale>.apk
+
+## <App-2> (com.example.app2)
+<sha256-of-your-base-apk>  com.example.app2/base.apk
+<sha256-of-your-arm64-split>  com.example.app2/split_config.arm64_v8a.apk
+<sha256-of-your-density-split>  com.example.app2/split_config.xxhdpi.apk
+
+## <App-3> (com.example.app3)
+<sha256-of-your-base-apk>  com.example.app3/base.apk
+<sha256-of-your-arm64-split>  com.example.app3/split_config.arm64_v8a.apk
+<sha256-of-your-density-split>  com.example.app3/split_config.xxhdpi.apk
+<sha256-of-your-locale-split>  com.example.app3/split_config.<locale>.apk
